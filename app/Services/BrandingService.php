@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Company;
 use App\Models\CompanyBranding;
+use Illuminate\Support\Facades\Storage;
 
 class BrandingService
 {
@@ -62,11 +63,45 @@ class BrandingService
 
     public function subirLogo(Company $company, $archivo)
     {
-        $path = $archivo->store('company-logos', 'public');
+        // Validar archivo
+        if (!$archivo->isValid()) {
+            throw new \Exception('Archivo inválido o corrupto');
+        }
+
+        // Obtener extensión
+        $ext = $archivo->getClientOriginalExtension();
+        $nombre = "logo-{$company->id}-" . time() . ".{$ext}";
+        
+        // Guardar en storage
+        $path = $archivo->storeAs('company-logos', $nombre, 'public');
+        
+        // Obtener branding y actualizar
         $branding = $this->getBranding($company);
-        $branding->logo_path = basename($path);
+        
+        // Eliminar logo anterior si existe
+        if ($branding->logo_path && \Storage::disk('public')->exists("company-logos/{$branding->logo_path}")) {
+            \Storage::disk('public')->delete("company-logos/{$branding->logo_path}");
+        }
+        
+        $branding->logo_path = $nombre;
         $branding->save();
 
         return $branding;
+    }
+
+    /**
+     * Validar que un color en formato hex es válido
+     */
+    public function validarColor(string $color): bool
+    {
+        return preg_match('/#[a-f0-9]{6}$/i', $color) === 1;
+    }
+
+    /**
+     * Limpiar branding: remover colores inválidos
+     */
+    public function limpiarColores(array $colores): array
+    {
+        return array_filter($colores, fn($color) => $this->validarColor($color));
     }
 }
