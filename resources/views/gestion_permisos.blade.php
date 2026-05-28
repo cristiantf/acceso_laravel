@@ -6,10 +6,14 @@
 <div class="py-3 h-100 d-flex flex-column">
     <!-- Encabezado de la Barra Lateral -->
     <div class="text-center mb-4 pt-3">
-        <div class="bg-primary d-inline-block p-2 rounded-4 mb-2 shadow">
-            <i class="bi bi-shield-lock-fill fs-2 text-white"></i>
-        </div>
-        <h6 class="text-white fw-bold mt-1 small">SISTEMA ISTAE</h6>
+        @if(isset($branding) && $branding->logo_path)
+            <img src="{{ asset('storage/company-logos/' . $branding->logo_path) }}" alt="Logo" class="img-fluid rounded bg-white p-2 mb-2 shadow-sm" style="max-height: 70px;">
+        @else
+            <div class="bg-primary d-inline-block p-2 rounded-4 mb-2 shadow">
+                <i class="bi bi-shield-lock-fill fs-2 text-white"></i>
+            </div>
+        @endif
+        <h6 class="text-white fw-bold mt-2 small">{{ isset($branding) && isset($branding->textos['nombre_sistema']) ? strtoupper($branding->textos['nombre_sistema']) : 'SISTEMA ISTAE' }}</h6>
     </div>
     
     <!-- Menú de Navegación -->

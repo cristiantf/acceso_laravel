@@ -170,13 +170,11 @@
                         <button class="btn btn-outline-light border-0 me-2" id="sidebar-toggler">
                             <i class="bi bi-list fs-4"></i>
                         </button>
-                        <a class="navbar-brand fw-bold" href="#">🎓 {{ isset($branding) && isset($branding->textos['nombre_sistema']) ? strtoupper($branding->textos['nombre_sistema']) : 'ISTAE ACCESO' }}</a>
                         <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
                             @if(isset($branding) && $branding->logo_path)
                                 <img src="{{ asset('storage/company-logos/' . $branding->logo_path) }}" alt="Logo" style="max-height: 40px; object-fit: contain;" class="me-2 rounded bg-white p-1">
-                            @else
-                                🎓 {{ isset($branding) && isset($branding->textos['nombre_sistema']) ? strtoupper($branding->textos['nombre_sistema']) : 'ISTAE ACCESO' }}
                             @endif
+                            🎓 {{ isset($branding) && isset($branding->textos['nombre_sistema']) ? strtoupper($branding->textos['nombre_sistema']) : 'ISTAE ACCESO' }}
                         </a>
                     </div>
 

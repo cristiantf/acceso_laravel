@@ -3,10 +3,14 @@
 @section('sidebar')
 <div class="py-3 h-100 d-flex flex-column">
     <div class="text-center mb-4 pt-3">
-        <div class="bg-success d-inline-block p-2 rounded-4 mb-2 shadow">
-            <i class="bi bi-person-check-fill fs-2 text-white"></i>
-        </div>
-        <h6 class="text-white fw-bold mt-1 small">PERFIL DOCENTE</h6>
+        @if(isset($branding) && $branding->logo_path)
+            <img src="{{ asset('storage/company-logos/' . $branding->logo_path) }}" alt="Logo" class="img-fluid rounded bg-white p-2 mb-2 shadow-sm" style="max-height: 70px;">
+        @else
+            <div class="bg-success d-inline-block p-2 rounded-4 mb-2 shadow">
+                <i class="bi bi-person-check-fill fs-2 text-white"></i>
+            </div>
+        @endif
+        <h6 class="text-white fw-bold mt-2 small">{{ isset($branding) && isset($branding->textos['nombre_sistema']) ? strtoupper($branding->textos['nombre_sistema']) : 'PERFIL DOCENTE' }}</h6>
     </div>
     <div class="nav flex-column flex-grow-1">
         <a href="{{ route('docente_dashboard') }}" class="nav-link active"><i class="bi bi-grid-fill me-3"></i>Dashboard</a>
