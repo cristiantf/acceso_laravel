@@ -1,0 +1,165 @@
+@extends('base')
+
+@section('sidebar')
+<div class="py-3 h-100 d-flex flex-column">
+    <div class="text-center mb-4 pt-3">
+        <div class="bg-success d-inline-block p-2 rounded-4 mb-2 shadow">
+            <i class="bi bi-person-check-fill fs-2 text-white"></i>
+        </div>
+        <h6 class="text-white fw-bold mt-1 small">PERFIL DOCENTE</h6>
+    </div>
+    <div class="nav flex-column flex-grow-1">
+        <a href="{{ route('docente_dashboard') }}" class="nav-link active"><i class="bi bi-grid-fill me-3"></i>Dashboard</a>
+        <a href="{{ route('perfil') }}" class="nav-link"><i class="bi bi-person-circle me-3"></i>Mi Perfil</a>
+    </div>
+    <div class="mt-auto p-3">
+        <hr class="text-white-50">
+        <a href="{{ route('logout') }}" class="btn btn-outline-light w-100 rounded-pill py-2 small fw-bold">
+            <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+        </a>
+    </div>
+</div>
+@endsection
+
+@section('content')
+<!-- MODAL PARA MARCACIÓN REMOTA -->
+<div class="modal fade" id="modalMarcarAsistencia" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <form action="{{ route('docente_marcar') }}" method="POST" enctype="multipart/form-data" id="formMarcarAsistencia">
+                @csrf
+                <div class="modal-header bg-primary text-white border-0 py-3">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-geo-alt-fill me-2"></i>Registrar Asistencia Remota</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div id="gps-status" class="alert alert-info d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        Obteniendo ubicación GPS...
+                    </div>
+                    <input type="hidden" name="latitud" id="latitud">
+                    <input type="hidden" name="longitud" id="longitud">
+
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label fw-bold small">Descripción (Opcional)</label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="2" placeholder="Ej: Reunión externa con..."></textarea>
+                    </div>
+
+                    <div>
+                        <label for="foto" class="form-label fw-bold small">Evidencia Fotográfica (Opcional)</label>
+                        <input class="form-control" type="file" id="foto" name="foto" accept="image/*" capture="environment">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light p-3">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" id="btnSubmitAsistencia" class="btn btn-primary rounded-pill px-5 fw-bold shadow" disabled>CONFIRMAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="container-fluid">
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm p-3">
+                <h4 class="fw-bold">Bienvenido, <span class="text-primary">{{ auth()->user()->nombre }}</span></h4>
+                <p class="text-muted mb-0">Aquí puedes gestionar tu asistencia y acceso.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100 d-grid">
+                <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
+                    <i class="bi bi-calendar-check-fill text-primary display-4 mb-3"></i>
+                    <h5 class="fw-bold">Marcar Asistencia Remota</h5>
+                    <p class="text-muted small">Registra tu asistencia desde tu ubicación actual. Se requerirá acceso al GPS.</p>
+                    <button class="btn btn-primary rounded-pill px-5 fw-bold mt-auto" data-bs-toggle="modal" data-bs-target="#modalMarcarAsistencia" onclick="initiateGPS()">Marcar Ahora</button>
+                </div>
+            </div>
+        </div>
+        @if(auth()->user()->acceso_puerta == 1)
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100 d-grid">
+                <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
+                    <i class="bi bi-unlock-fill text-success display-4 mb-3"></i>
+                    <h5 class="fw-bold">Apertura de Puerta</h5>
+                    <p class="text-muted small">Activa el relé para abrir la puerta principal de forma remota.</p>
+                    <a href="{{ route('docente_abrir') }}" class="btn btn-success rounded-pill px-5 fw-bold mt-auto">Abrir Puerta</a>
+                </div>
+            </div>
+        </div>
+        @endif
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2"></i>Mis Últimos 10 Registros</h6>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr class="small text-muted text-uppercase">
+                                <th class="ps-4">Fecha y Hora</th>
+                                <th>Evento</th>
+                                <th>Origen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($logs as $l)
+                            <tr>
+                                <td class="ps-4">{{ \Carbon\Carbon::parse($l->fecha)->format('Y-m-d H:i:s') }}</td>
+                                <td><span class="badge bg-primary bg-opacity-10 text-dark border-0">{{ $l->tipo_evento }}</span></td>
+                                <td>{{ $l->origen }}</td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="3" class="text-center py-5 text-muted">No tienes registros.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function initiateGPS() {
+    const statusDiv = document.getElementById('gps-status');
+    const latInput = document.getElementById('latitud');
+    const lonInput = document.getElementById('longitud');
+    const submitBtn = document.getElementById('btnSubmitAsistencia');
+
+    statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>Obteniendo ubicación GPS...';
+    statusDiv.className = 'alert alert-info d-flex align-items-center';
+    submitBtn.disabled = true;
+
+    if (!navigator.geolocation) {
+        statusDiv.innerHTML = 'Geolocalización no es soportada por este navegador.';
+        statusDiv.className = 'alert alert-danger';
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            latInput.value = position.coords.latitude;
+            lonInput.value = position.coords.longitude;
+            statusDiv.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>Ubicación obtenida con éxito.`;
+            statusDiv.className = 'alert alert-success d-flex align-items-center';
+            submitBtn.disabled = false;
+        },
+        () => {
+            statusDiv.innerHTML = 'No se pudo obtener la ubicación. Por favor, habilite los permisos de GPS.';
+            statusDiv.className = 'alert alert-danger';
+        }
+    );
+}
+</script>
+@endsection
